@@ -1,4 +1,6 @@
-import { Text, View } from "react-native";
+import Chess from "@/components/Chess";
+import { View } from "react-native";
+import { ChessProvider } from '@/ChessContext';
 
 export default function Index() {
   return (
@@ -9,7 +11,9 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <ChessProvider>
+        <Chess/>
+      </ChessProvider>
     </View>
   );
 }
