@@ -8,16 +8,16 @@ import useOnPressingCell from "@/useOnPressingCell";
 interface Props {
   row: number;
   col: number;
+  onPressingCell: (row: number, col: number) => void;
 }
 
 const ChessCell: FC<Props> = (props) => {
-  const { row, col } = props;
+  const { row, col, onPressingCell } = props;
   const { board, selectedCell } = useContext(ChessContext);
   const boardPiece = board[row][col];
   const {piecePlayer = '', pieceType = ''} = boardPiece || {};
   const isBlackCell = (row + col) % 2 === 0;
   const isSelectedCell = selectedCell?.row === row && selectedCell?.col === col;
-  const onPressingCell = useOnPressingCell();
 
   const onPress = useCallback(() => {
     onPressingCell(row, col);
@@ -31,7 +31,7 @@ const ChessCell: FC<Props> = (props) => {
         isBlackCell ? styles.blackCell : null,
         isSelectedCell ? styles.selectedCell : null,
       ]}
-      onPress={onPress}  
+      onPressIn={onPress}  
     >
       {
         boardPiece ? (

@@ -10,7 +10,7 @@ export const getRank = (row: number) => {
 
 export const getChessPiece = (pieceType: string, piecePlayer: string) => {
   const pieceUnicode = {
-    [PIECE.PAWN]: piecePlayer === PLAYER.WHITE ? "\u2659" : "\u265F",
+    [PIECE.PAWN]: piecePlayer === PLAYER.WHITE ? "\u2659" : "\u265F\uFE0E",
     [PIECE.ROOK]: piecePlayer === PLAYER.WHITE ? "\u2656" : "\u265C",
     [PIECE.KNIGHT]: piecePlayer === PLAYER.WHITE ? "\u2658" : "\u265E",
     [PIECE.BISHOP]: piecePlayer === PLAYER.WHITE ? "\u2657" : "\u265D",
@@ -18,4 +18,12 @@ export const getChessPiece = (pieceType: string, piecePlayer: string) => {
     [PIECE.KING]: piecePlayer === PLAYER.WHITE ? "\u2654" : "\u265A"
   }
   return pieceUnicode[pieceType];
+}
+
+export const getClonedObj = (obj: Object) => {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+export const getNextplayerTurn = (playerTurn: string) => {
+  return playerTurn === PLAYER.WHITE ? PLAYER.BLACK : PLAYER.WHITE;
 }

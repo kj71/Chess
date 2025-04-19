@@ -9,12 +9,13 @@ interface ChessContextType {
   board: Array<Array<{ piecePlayer: string; pieceType: string } | null>>;
   selectedCell: Cell | null;
   previousTargetCell: Cell | null;
-  pawnMovedForwardinPreviousTurn: boolean;
+  pawnMovedTwoCellsInPreviousTurn: boolean;
   playerTurn: string;
   gameState: string;
   kingMoved: {
     [key: string]: boolean;
   };
+  pawnEligibleToChange: boolean;
 }
 
 export const initialChessState: ChessContextType = {
@@ -72,7 +73,8 @@ export const initialChessState: ChessContextType = {
     [PLAYER.WHITE]: false,
     [PLAYER.BLACK]: false,
   },
-  pawnMovedForwardinPreviousTurn: false,
+  pawnMovedTwoCellsInPreviousTurn: false,
+  pawnEligibleToChange: false,
 };
 
 const chessReducer = (state: ChessContextType, action: any) => {
@@ -83,6 +85,43 @@ const chessReducer = (state: ChessContextType, action: any) => {
         ...state,
         selectedCell: payload,
       };
+    }
+    case 'UPDATE_BOARD_AFTER_MOVE': {
+      const {
+        board,
+        pawnMovedTwoCellsInPreviousTurn,
+        previousTargetCell,
+        kingMoved,
+        playerTurn,
+        pawnEligibleToChange,
+      } = payload;
+      return {
+        ...state,
+        board,
+        selectedCell: null,
+        previousTargetCell,
+        playerTurn,
+        kingMoved,
+        pawnMovedTwoCellsInPreviousTurn,
+        pawnEligibleToChange,
+      }
+    }
+    case 'REPLACE_PAWN': {
+      const {pieceType, playerTurn} = payload;
+      const newBoard = state.board;
+      if (state.previousTargetCell) {
+        const {row, col} = state.previousTargetCell;
+        newBoard[row][col] = {
+          piecePlayer: newBoard[row][col]?.piecePlayer || PLAYER.WHITE,
+          pieceType,
+        };
+      }
+      return {
+        ...state,
+        board: newBoard,
+        playerTurn,
+        pawnEligibleToChange: false,
+      }
     }
     default:
       return state;
