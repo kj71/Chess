@@ -14,78 +14,90 @@ const useOnPressingCell = () => {
   const kingMovedRef = useRef<{
     [key: string]: boolean;
   } | null>(null);
+  const {row: selectedRow = -1, col: selectedCol = -1} = selectedCell || {};
+
+  const movePieceToTargetTemporarily = useCallback((targetRow: number, targetCol: number) => {
+    if(!tempBoard.current) {
+      return;
+    }
+    tempBoard.current[targetRow][targetCol] = tempBoard.current[selectedRow][selectedCol];
+    tempBoard.current[selectedRow][selectedCol] = null;
+  }, [selectedRow, selectedCol]);
+
+  const canPawnMove = useCallback((targetRow: number, targetCol: number) => {
+    if(!tempBoard.current) {
+      return false;
+    }
+    const moveDirection = selectedPiecePlayer === PLAYER.WHITE ? -1 : 1;
+    const pawnInitialRow = selectedPiecePlayer === PLAYER.WHITE ? 6 : 1;
+    const isPawnInInitialPosition = selectedRow === pawnInitialRow;
+    const targetBoardPiece = board[targetRow][targetCol];
+    if(Math.abs(selectedCol - targetCol) > 1) {
+      return false;
+    }
+    if(selectedCol === targetCol) {
+      if(targetBoardPiece) {
+        return false;
+      }
+      if(targetRow === selectedRow + moveDirection) {
+        movePieceToTargetTemporarily(targetRow, targetCol);
+        return true;
+      }
+      if(targetRow === selectedRow + 2 * moveDirection && isPawnInInitialPosition) {
+        movePieceToTargetTemporarily(targetRow, targetCol);
+        pawnMovedTwoCellsRef.current = true;
+        return true;
+      }
+      return false;
+    }
+    if(targetRow !== selectedRow + moveDirection) {
+      return false;
+    }
+    if(targetBoardPiece) {
+      movePieceToTargetTemporarily(targetRow, targetCol);
+      return true;
+    }
+    if(!pawnMovedTwoCellsInPreviousTurn || !previousTargetCell) {
+      return false;
+    }
+    const {row: previousTargetRow, col: previousTargetCol} = previousTargetCell;
+    const enPassantRow = selectedPiecePlayer === PLAYER.WHITE ? 3 : 4;
+    if(
+      selectedRow === enPassantRow
+      && pawnMovedTwoCellsInPreviousTurn
+      && previousTargetRow === selectedRow
+      && previousTargetCol === targetCol
+    ) {
+      movePieceToTargetTemporarily(targetRow, targetCol);
+      tempBoard.current[previousTargetRow][previousTargetCol] = null;
+      return true;
+    }
+    return false;
+  }, [chessState, movePieceToTargetTemporarily]);
+
+  const canKnightMove = useCallback((targetRow: number, targetCol: number) => {
+    if(!tempBoard.current) {
+      return false;
+    }
+    const colDiff = Math.abs(selectedCol - targetCol);
+    const rowDiff = Math.abs(selectedRow - targetRow);
+    if(colDiff == 2 && rowDiff == 1 || colDiff == 1 && rowDiff == 2) {
+      movePieceToTargetTemporarily(targetRow, targetCol);
+      return true;
+    }
+    return false;
+  }, [chessState, movePieceToTargetTemporarily]);
 
   const canPieceMove = useCallback((targetRow: number, targetCol: number) => {
     if(!selectedCell || !tempBoard.current) {
-      return;
+      return false;
     }
-    const targetBoardPiece = board[targetRow][targetCol];
-    const {piecePlayer: targetPiecePlayer = ''} = targetBoardPiece || {};
-    const {row: selectedRow, col: selectedCol} = selectedCell;
-
-    const movePieceToTargetTemporarily = () => {
-      if(!tempBoard.current) {
-        return;
-      }
-      tempBoard.current[targetRow][targetCol] = tempBoard.current[selectedRow][selectedCol];
-      tempBoard.current[selectedRow][selectedCol] = null;
-    }
-
-    const canPawnMove = () => {
-      if(!tempBoard.current) {
-        return;
-      }
-      const moveDirection = selectedPiecePlayer === PLAYER.WHITE ? -1 : 1;
-      const pawnInitialRow = selectedPiecePlayer === PLAYER.WHITE ? 6 : 1;
-      const isPawnInInitialPosition = selectedRow === pawnInitialRow;
-      if(Math.abs(selectedCol - targetCol) > 1) {
-        return false;
-      }
-      if(selectedCol === targetCol) {
-        if(targetBoardPiece) {
-          return false;
-        }
-        if(targetRow === selectedRow + moveDirection) {
-          movePieceToTargetTemporarily();
-          return true;
-        }
-        if(targetRow === selectedRow + 2 * moveDirection && isPawnInInitialPosition) {
-          movePieceToTargetTemporarily();
-          pawnMovedTwoCellsRef.current = true;
-          return true;
-        }
-        return false;
-      }
-      if(targetRow !== selectedRow + moveDirection) {
-        return false;
-      }
-      if(targetBoardPiece) {
-        movePieceToTargetTemporarily();
-        return true;
-      }
-      if(!pawnMovedTwoCellsInPreviousTurn || !previousTargetCell) {
-        return false;
-      }
-      const {row: previousTargetRow, col: previousTargetCol} = previousTargetCell;
-      const enPassantRow = selectedPiecePlayer === PLAYER.WHITE ? 3 : 4;
-      if(
-        selectedRow === enPassantRow
-        && pawnMovedTwoCellsInPreviousTurn
-        && previousTargetRow === selectedRow
-        && previousTargetCol === targetCol
-      ) {
-        movePieceToTargetTemporarily();
-        tempBoard.current[previousTargetRow][previousTargetCol] = null;
-        return true;
-      }
-    }
-
     switch (selectedPieceType) {
-      case PIECE.PAWN: return canPawnMove();
-
+      case PIECE.PAWN: return canPawnMove(targetRow, targetCol);
+      case PIECE.KNIGHT: return canKnightMove(targetRow, targetCol);
+      default: return false;
     }
-
-  }, [chessState, dispatch]);
+  }, [chessState, dispatch, canPawnMove, canKnightMove]);
 
   const isKingInCheckAfterMove = useCallback(() => {
     return false;
