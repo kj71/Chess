@@ -3,7 +3,6 @@ import { Text, TouchableOpacity } from "react-native";
 import styles from "./styles";
 import { ChessContext } from "@/ChessContext";
 import { getChessPiece } from "@/utils";
-import useOnPressingCell from "@/useOnPressingCell";
 
 interface Props {
   row: number;

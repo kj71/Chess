@@ -111,16 +111,35 @@ const useOnPressingCell = () => {
     }
     tempBoard.current[targetRow][targetCol] = tempBoard.current[selectedRow][selectedCol];
     tempBoard.current[selectedRow][selectedCol] = null;
+    
     if(selectedPieceType === PIECE.KING && kingMovedRef.current) {
       kingMovedRef.current[selectedPiecePlayer] = true;
     }
+
     if(!rookMovedRef.current) {
       return;
     }
-    if(selectedPieceType === PIECE.ROOK && selectedCell?.col === 0 && !rookMovedRef.current[selectedPiecePlayer][PIECE.QUEEN]) {
+
+    if(targetCol === 0 && targetRow === 0) {
+      rookMovedRef.current[PLAYER.BLACK][PIECE.QUEEN] = true;
+    }
+    if(targetCol === 7 && targetRow === 0) {
+      rookMovedRef.current[PLAYER.BLACK][PIECE.KING] = true;
+    }
+    if(targetCol === 0 && targetRow === 7) {
+      rookMovedRef.current[PLAYER.WHITE][PIECE.QUEEN] = true;
+    }
+    if(targetCol === 7 && targetRow === 7) {
+      rookMovedRef.current[PLAYER.WHITE][PIECE.KING] = true;
+    }
+    
+    if(selectedPieceType !== PIECE.ROOK) {
+      return;
+    }
+    if(selectedCell?.col === 0 && selectedCell?.row === (selectedPiecePlayer === PLAYER.WHITE ? 7 : 0)) {
       rookMovedRef.current[selectedPiecePlayer][selectedPieceType] = true;
     }
-    if(selectedPieceType === PIECE.ROOK && selectedCell?.col === 7 && !rookMovedRef.current[selectedPiecePlayer][PIECE.KING]) {
+    if(selectedCell?.col === 7 && selectedCell?.row === (selectedPiecePlayer === PLAYER.WHITE ? 7 : 0)) {
       rookMovedRef.current[selectedPiecePlayer][selectedPieceType] = true;
     }
   }, [selectedRow, selectedCol, selectedPiecePlayer, selectedPieceType]);
@@ -272,11 +291,10 @@ const useOnPressingCell = () => {
       // Determine rook position and new positions based on castling direction
       const isKingSideCastling = targetCol > selectedCol;
       const rookCol = isKingSideCastling ? 7 : 0;
-      const rookNewCol = isKingSideCastling ? selectedCol + 1 : selectedCol - 1;
       const rook = board[selectedRow][rookCol];
       
       // Check if rook exists and hasn't moved
-      if(!rook || rook.pieceType !== PIECE.ROOK || !rookMovedRef.current || rookMovedRef.current[rook.piecePlayer][rook.pieceType]) {
+      if(!rook || rook.pieceType !== PIECE.ROOK || rookMovedRef?.current?.[rook.piecePlayer]?.[rook.pieceType]) {
         return false;
       }
       
