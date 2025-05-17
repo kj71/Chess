@@ -110,6 +110,37 @@ const useOnPressingCell = () => {
     return true;
   }, [chessState, movePieceToTargetTemporarily]);
 
+  const canRookMove = useCallback((targetRow: number, targetCol: number) => {
+    if(!tempBoard.current) {
+      return false;
+    }
+    const colDiff = Math.abs(selectedCol - targetCol);
+    const rowDiff = Math.abs(selectedRow - targetRow);
+    if(colDiff !== 0 && rowDiff !== 0) {
+      return false;
+    }
+    if(colDiff === 0) {
+      const moveDirectionRow = (targetRow - selectedRow) / rowDiff;
+      for(let i = 1; i < rowDiff; i++) {
+        const nextRow = selectedRow + moveDirectionRow * i;
+        if(board[nextRow][selectedCol]) {
+          return false;
+        }
+      }
+    }
+    if(rowDiff === 0) {
+      const moveDirectionCol = (targetCol - selectedCol) / colDiff;
+      for(let i = 1; i < colDiff; i++) {
+        const nextCol = selectedCol + moveDirectionCol * i;
+        if(board[selectedRow][nextCol]) {
+          return false;
+        }
+      }
+    }
+    movePieceToTargetTemporarily(targetRow, targetCol);
+    return true;
+  }, [chessState, movePieceToTargetTemporarily]);
+
   const canPieceMove = useCallback((targetRow: number, targetCol: number) => {
     if(!selectedCell || !tempBoard.current) {
       return false;
@@ -118,6 +149,7 @@ const useOnPressingCell = () => {
       case PIECE.PAWN: return canPawnMove(targetRow, targetCol);
       case PIECE.KNIGHT: return canKnightMove(targetRow, targetCol);
       case PIECE.BISHOP: return canBishopMove(targetRow, targetCol);
+      case PIECE.ROOK: return canRookMove(targetRow, targetCol);
       default: return false;
     }
   }, [chessState, dispatch, canPawnMove, canKnightMove]);
