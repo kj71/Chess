@@ -141,6 +141,13 @@ const useOnPressingCell = () => {
     return true;
   }, [chessState, movePieceToTargetTemporarily]);
 
+  const canQueenMove = useCallback((targetRow: number, targetCol: number) => {
+    if(!tempBoard.current) {
+      return false;
+    }
+    return canBishopMove(targetRow, targetCol) || canRookMove(targetRow, targetCol);
+  }, [chessState, movePieceToTargetTemporarily, canBishopMove, canRookMove]);
+
   const canPieceMove = useCallback((targetRow: number, targetCol: number) => {
     if(!selectedCell || !tempBoard.current) {
       return false;
@@ -150,9 +157,10 @@ const useOnPressingCell = () => {
       case PIECE.KNIGHT: return canKnightMove(targetRow, targetCol);
       case PIECE.BISHOP: return canBishopMove(targetRow, targetCol);
       case PIECE.ROOK: return canRookMove(targetRow, targetCol);
+      case PIECE.QUEEN: return canQueenMove(targetRow, targetCol);
       default: return false;
     }
-  }, [chessState, dispatch, canPawnMove, canKnightMove]);
+  }, [chessState, dispatch, canPawnMove, canKnightMove, canBishopMove, canRookMove, canQueenMove]);
 
   const isKingInCheckAfterMove = useCallback(() => {
     return false;
