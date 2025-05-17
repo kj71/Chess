@@ -15,6 +15,11 @@ interface ChessContextType {
   kingMoved: {
     [key: string]: boolean;
   };
+  rookMoved: {
+    [key: string]: {
+      [key: string]: boolean;
+    };
+  };
   pawnEligibleToChange: boolean;
 }
 
@@ -73,6 +78,16 @@ export const initialChessState: ChessContextType = {
     [PLAYER.WHITE]: false,
     [PLAYER.BLACK]: false,
   },
+  rookMoved: {
+    [PLAYER.WHITE]: {
+      [PIECE.KING]: false,
+      [PIECE.QUEEN]: false,
+    },
+    [PLAYER.BLACK]: {
+      [PIECE.KING]: false,
+      [PIECE.QUEEN]: false,
+    },
+  },
   pawnMovedTwoCellsInPreviousTurn: false,
   pawnEligibleToChange: false,
 };
@@ -92,6 +107,7 @@ const chessReducer = (state: ChessContextType, action: any) => {
         pawnMovedTwoCellsInPreviousTurn,
         previousTargetCell,
         kingMoved,
+        rookMoved,
         playerTurn,
         pawnEligibleToChange,
       } = payload;
@@ -102,6 +118,7 @@ const chessReducer = (state: ChessContextType, action: any) => {
         previousTargetCell,
         playerTurn,
         kingMoved,
+        rookMoved,
         pawnMovedTwoCellsInPreviousTurn,
         pawnEligibleToChange,
       }
