@@ -88,6 +88,28 @@ const useOnPressingCell = () => {
     return false;
   }, [chessState, movePieceToTargetTemporarily]);
 
+  const canBishopMove = useCallback((targetRow: number, targetCol: number) => {
+    if(!tempBoard.current) {
+      return false;
+    }
+    const colDiff = Math.abs(selectedCol - targetCol);
+    const rowDiff = Math.abs(selectedRow - targetRow);
+    if(colDiff !== rowDiff) {
+      return false;
+    }
+    const moveDirectionCol = (targetCol - selectedCol) / colDiff;
+    const moveDirectionRow = (targetRow - selectedRow) / rowDiff;
+    for(let i = 1; i < colDiff; i++) {
+      const nextRow = selectedRow + moveDirectionRow * i;
+      const nextCol = selectedCol + moveDirectionCol * i;
+      if(board[nextRow][nextCol]) {
+        return false;
+      }
+    }
+    movePieceToTargetTemporarily(targetRow, targetCol);
+    return true;
+  }, [chessState, movePieceToTargetTemporarily]);
+
   const canPieceMove = useCallback((targetRow: number, targetCol: number) => {
     if(!selectedCell || !tempBoard.current) {
       return false;
@@ -95,6 +117,7 @@ const useOnPressingCell = () => {
     switch (selectedPieceType) {
       case PIECE.PAWN: return canPawnMove(targetRow, targetCol);
       case PIECE.KNIGHT: return canKnightMove(targetRow, targetCol);
+      case PIECE.BISHOP: return canBishopMove(targetRow, targetCol);
       default: return false;
     }
   }, [chessState, dispatch, canPawnMove, canKnightMove]);
