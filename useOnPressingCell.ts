@@ -162,9 +162,110 @@ const useOnPressingCell = () => {
     }
   }, [chessState, dispatch, canPawnMove, canKnightMove, canBishopMove, canRookMove, canQueenMove]);
 
-  const isKingInCheckAfterMove = useCallback(() => {
+  const getKingPosition = useCallback((board: Array<Array<{ piecePlayer: string; pieceType: string } | null>>, playerTurn: string) => {
+    for(let row = 0; row < 8; row++) {
+      for(let col = 0; col < 8; col++) {
+        const boardPiece = board[row][col];
+        if(boardPiece && boardPiece.pieceType === PIECE.KING && boardPiece.piecePlayer === playerTurn) {
+          return {row, col};
+        }
+      }
+    }
+    return null;
+  }, []);
+
+  const isKingInCheck = useCallback((board: Array<Array<{ piecePlayer: string; pieceType: string } | null>>, kingPosition: {row: number, col: number}, playerTurn: string) => {
+    const {row, col} = kingPosition;
+    const opponentPlayer = playerTurn === PLAYER.WHITE ? PLAYER.BLACK : PLAYER.WHITE;
+    
+    // Check for pawn attacks
+    const pawnDirections = playerTurn === PLAYER.WHITE ? [[-1, -1], [-1, 1]] : [[1, -1], [1, 1]];
+    for (const [dr, dc] of pawnDirections) {
+      const checkRow = row + dr;
+      const checkCol = col + dc;
+      if (checkRow >= 0 && checkRow < 8 && checkCol >= 0 && checkCol < 8) {
+        const piece = board[checkRow][checkCol];
+        if (piece && piece.pieceType === PIECE.PAWN && piece.piecePlayer === opponentPlayer) {
+          return true;
+        }
+      }
+    }
+    
+    // Check for knight attacks
+    const knightMoves = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+    for (const [dr, dc] of knightMoves) {
+      const checkRow = row + dr;
+      const checkCol = col + dc;
+      if (checkRow >= 0 && checkRow < 8 && checkCol >= 0 && checkCol < 8) {
+        const piece = board[checkRow][checkCol];
+        if (piece && piece.pieceType === PIECE.KNIGHT && piece.piecePlayer === opponentPlayer) {
+          return true;
+        }
+      }
+    }
+    
+    // Check for diagonal attacks (bishop and queen)
+    const diagonalDirections = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+    for (const [dr, dc] of diagonalDirections) {
+      let checkRow = row + dr;
+      let checkCol = col + dc;
+      while (checkRow >= 0 && checkRow < 8 && checkCol >= 0 && checkCol < 8) {
+        const piece = board[checkRow][checkCol];
+        if (piece) {
+          if (piece.piecePlayer === opponentPlayer && 
+              (piece.pieceType === PIECE.BISHOP || piece.pieceType === PIECE.QUEEN)) {
+            return true;
+          }
+          break; // Stop checking in this direction if we hit any piece
+        }
+        checkRow += dr;
+        checkCol += dc;
+      }
+    }
+    
+    // Check for horizontal/vertical attacks (rook and queen)
+    const straightDirections = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    for (const [dr, dc] of straightDirections) {
+      let checkRow = row + dr;
+      let checkCol = col + dc;
+      while (checkRow >= 0 && checkRow < 8 && checkCol >= 0 && checkCol < 8) {
+        const piece = board[checkRow][checkCol];
+        if (piece) {
+          if (piece.piecePlayer === opponentPlayer && 
+              (piece.pieceType === PIECE.ROOK || piece.pieceType === PIECE.QUEEN)) {
+            return true;
+          }
+          break; // Stop checking in this direction if we hit any piece
+        }
+        checkRow += dr;
+        checkCol += dc;
+      }
+    }
+    
+    // Check for king attacks (for adjacent squares)
+    const kingMoves = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+    for (const [dr, dc] of kingMoves) {
+      const checkRow = row + dr;
+      const checkCol = col + dc;
+      if (checkRow >= 0 && checkRow < 8 && checkCol >= 0 && checkCol < 8) {
+        const piece = board[checkRow][checkCol];
+        if (piece && piece.pieceType === PIECE.KING && piece.piecePlayer === opponentPlayer) {
+          return true;
+        }
+      }
+    }
+    
     return false;
-  }, [chessState, dispatch]);
+  }, []);
+
+  const isKingInCheckAfterMove = useCallback(() => {
+    if(!tempBoard.current) {
+      return false;
+    }
+    const kingPosition = getKingPosition(tempBoard.current, playerTurn);
+    if (!kingPosition) return false;
+    return isKingInCheck(tempBoard.current, kingPosition, playerTurn);
+  }, [chessState, dispatch, getKingPosition, isKingInCheck]);
 
   const onPressingCell = useCallback((targetRow: number, targetCol: number) => {
     if(!dispatch) {
@@ -197,28 +298,34 @@ const useOnPressingCell = () => {
       return;
     }
 
-    if(canPieceMove(targetRow, targetCol) && !isKingInCheckAfterMove()) {
-      let nextPlayerTurn = getNextplayerTurn(playerTurn);
-      let pawnEligibleToChange = false;
-      const isLastRow = (playerTurn === PLAYER.WHITE) ? (targetRow === 0): (targetRow === 7);
-      if(selectedPieceType === PIECE.PAWN && isLastRow) {
-        nextPlayerTurn = playerTurn;
-        pawnEligibleToChange = true;
-      }
-      dispatch ({
-        type: 'UPDATE_BOARD_AFTER_MOVE',
-        payload: {
-          board: tempBoard.current,
-          pawnMovedTwoCellsInPreviousTurn: pawnMovedTwoCellsRef.current,
-          previousTargetCell: {
-            row: targetRow,
-            col: targetCol,
-          },
-          kingMoved: kingMovedRef.current,
-          playerTurn: nextPlayerTurn,
-          pawnEligibleToChange,
+    if(canPieceMove(targetRow, targetCol)) {
+      if(!isKingInCheckAfterMove()) {
+        let nextPlayerTurn = getNextplayerTurn(playerTurn);
+        let pawnEligibleToChange = false;
+        const isLastRow = (playerTurn === PLAYER.WHITE) ? (targetRow === 0): (targetRow === 7);
+        if(selectedPieceType === PIECE.PAWN && isLastRow) {
+          nextPlayerTurn = playerTurn;
+          pawnEligibleToChange = true;
         }
-      })
+        dispatch ({
+          type: 'UPDATE_BOARD_AFTER_MOVE',
+          payload: {
+            board: tempBoard.current,
+            pawnMovedTwoCellsInPreviousTurn: pawnMovedTwoCellsRef.current,
+            previousTargetCell: {
+              row: targetRow,
+              col: targetCol,
+            },
+            kingMoved: kingMovedRef.current,
+            playerTurn: nextPlayerTurn,
+            pawnEligibleToChange,
+          }
+        })
+      } else {
+        tempBoard.current = getClonedObj(board);
+        pawnMovedTwoCellsRef.current = pawnMovedTwoCellsInPreviousTurn;
+        kingMovedRef.current = getClonedObj(kingMoved);
+      }
     }
 
   }, [chessState, dispatch, canPieceMove, isKingInCheckAfterMove]);

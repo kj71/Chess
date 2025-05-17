@@ -1,4 +1,4 @@
-import { FC, useCallback, useContext } from "react";
+import React, { FC, useCallback, useContext } from "react";
 import { Text, View } from "react-native";
 import styles from "./styles";
 import ChessCell from "../ChessCell";
