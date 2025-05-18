@@ -49,6 +49,11 @@ yarn start
 - `npm test` or `yarn test` - Runs the test suite
 - `npm run lint` or `yarn lint` - Runs the linter
 
+## Deployment
+
+To deploy your Expo app as a website, follow the official Expo documentation for publishing websites:
+[Expo Website Publishing Guide](https://docs.expo.dev/guides/publishing-websites/)
+
 ## Project Structure
 
 ```
