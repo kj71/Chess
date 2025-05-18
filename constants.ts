@@ -15,8 +15,6 @@ export const PIECE = {
 
 export const GAME_STATE = {
   IN_PROGRESS: 'IN_PROGRESS',
-  CHECK: 'CHECK',
   CHECKMATE: 'CHECKMATE',
   STALEMATE: 'STALEMATE',
-  DRAW: 'DRAW',
 }

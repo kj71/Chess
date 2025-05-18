@@ -1,17 +1,24 @@
-import React, { FC, useCallback, useContext } from "react";
+import React, { FC, useCallback, useContext, useMemo } from "react";
 import { Text, View } from "react-native";
 import styles from "./styles";
 import ChessCell from "../ChessCell";
 import useOnPressingCell from "@/useOnPressingCell";
 import { ChessContext, ChessDispatchContext } from "@/ChessContext";
 import { getChessPiece, getNextplayerTurn } from "@/utils";
-import { PIECE, PLAYER } from "@/constants";
+import { GAME_STATE, PIECE, PLAYER } from "@/constants";
 
 const Chess: FC = () => {
   const board = [];
   const onPressingCell = useOnPressingCell();
-  const { pawnEligibleToChange, playerTurn } = useContext(ChessContext);
+  const { pawnEligibleToChange, playerTurn, gameState } = useContext(ChessContext);
   const dispatch = useContext(ChessDispatchContext);
+
+  const playerWon = useMemo(() => {
+    if(gameState !== GAME_STATE.CHECKMATE) {
+      return null;
+    }
+    return getNextplayerTurn(playerTurn);
+  }, [gameState, playerTurn]);
 
   const onChoosingPiece = useCallback((piece: string) => {
     if(!dispatch) {
@@ -39,6 +46,20 @@ const Chess: FC = () => {
   }
   return (
     <>
+      {
+        gameState === GAME_STATE.CHECKMATE
+        ? (
+          <Text style={styles.checkmateText}>{`Checkmate!!! ${playerWon} Won!`}</Text>
+        )
+        : null
+      }
+      {
+        gameState === GAME_STATE.STALEMATE
+        ? (
+          <Text style={styles.checkmateText}>{`Stalemate!!!`}</Text>
+        )
+        : null
+      }
       {
         pawnEligibleToChange
         ? (

@@ -140,6 +140,12 @@ const chessReducer = (state: ChessContextType, action: any) => {
         pawnEligibleToChange: false,
       }
     }
+    case 'UPDATE_GAME_STATE': {
+      return {
+        ...state,
+        gameState: payload,
+      }
+    }
     default:
       return state;
   }

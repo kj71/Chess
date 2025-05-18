@@ -18,7 +18,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: "#D9EFFF",
     borderWidth: 0.5,
-
+  },
+  checkmateText: {
+    fontSize: 20,
+    textAlign: 'center',
+    marginBottom: 20,
   },
 });
 
